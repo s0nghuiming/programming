@@ -16,7 +16,8 @@ MOST_LEFT = CELL_WIDTH / 2
 MOST_RIGHT = WINDOW_WIDTH - CELL_WIDTH / 2
 MOST_TOP = CELL_WIDTH / 2
 MOST_BOTTOM = WINDOW_HEIGHT - CELL_WIDTH / 2
-CELL_NUM = 10
+CELL_INIT_NUM = 10
+SUM_CELL = CELL_INIT_NUM
 
 
 # Cell chain init
@@ -24,13 +25,17 @@ cell_chain = {}
 # Search map is for speeding search. each x coord as key of map. each y 
 # with the same x consist a list after key x.
 search_map = {}
-X = np.random.randint( MOST_LEFT, MOST_RIGHT - CELL_WIDTH, CELL_NUM )
-Y = np.random.randint( MOST_TOP, MOST_BOTTOM - CELL_WIDTH, CELL_NUM )
+X = np.random.randint( MOST_LEFT, MOST_RIGHT - CELL_WIDTH, CELL_INIT_NUM )
+Y = np.random.randint( MOST_TOP, MOST_BOTTOM - CELL_WIDTH, CELL_INIT_NUM )
 
 
 # TK
 root = tk.Tk()
 
+# Label
+label_sum = Label(root, text="0")
+canvas.create_text( 10, 10, text="Total cell: " + str(CELL_INIT_NUM) )
+# Canvas
 canvas = tk.Canvas(root, bg='white', width=800, height=600)
 canvas.configure(bg='white')
 canvas.pack(fill=tk.BOTH, expand=tk.YES)
@@ -47,8 +52,8 @@ for x, y in zip(X, Y):
         else:
             pass # x, y already in map.
     else:
-        search_map[a] = []
-        search_map[a].append(y)
+        search_map[x] = []
+        search_map[x].append(y)
 
 # Function
 # spawn:
@@ -74,8 +79,8 @@ def spawn(cell=None, speed=1):
             dx, dy = delta_map[np.random.randint(len(delta_map))]
             if xs + dx < MOST_RIGHT or xs + dx > MOST_LEFT:
                 if ys + dy < MOST_BOTTOM or ys + dy > MOST_TOP:
-                    if (xs + dx) in search_map:
-                    new_cells.append( Cell(xs + dx, ys + dy ) )
+                    if not (xs + dx) in search_map or not (ys + dy) in search_map[xs+dx]:
+                        new_cells.append( Cell(xs + dx, ys + dy ) )
         return new_cells
     else:
         return None
@@ -84,7 +89,6 @@ def one_generation():
     # Modify data as you wish
     if len(cell_chain) < LIMIT_NUM:
         father_id = np.random.choice(list(cell_chain))
-        print(father_id)
         spawn_cells = spawn(cell_chain[father_id])
         #canvas.delete(tk.ALL)
         for s_c in spawn_cells:
@@ -94,17 +98,18 @@ def one_generation():
                                           s_c.y+CELL_WIDTH)
             s_c.serialno = rect_id
             cell_chain[rect_id] = s_c
+            SUM_CELL = SUM_CELL + 1
+        if 0 != len(spawn_cells):
+            canvas
     else:
         print("Maximum exceeds.")
-    root.after(1000, one_generation)
+    root.after(500, one_generation)
 
-    # Update canvas
-    #for i, c in cell_chain.items():
-    #    print(i, c)
     root.update()
 
 
 #canvas.bind("<Button-1>", one_generation)
+
 
 root.after(0, one_generation)
 root.mainloop()
