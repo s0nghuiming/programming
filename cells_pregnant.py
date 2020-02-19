@@ -33,12 +33,13 @@ Y = np.random.randint( MOST_TOP, MOST_BOTTOM - CELL_WIDTH, CELL_INIT_NUM )
 root = tk.Tk()
 
 # Label
-label_sum = Label(root, text="0")
-canvas.create_text( 10, 10, text="Total cell: " + str(CELL_INIT_NUM) )
+label_sum = tk.Label(root, text="Total cell: ")
 # Canvas
 canvas = tk.Canvas(root, bg='white', width=800, height=600)
 canvas.configure(bg='white')
-canvas.pack(fill=tk.BOTH, expand=tk.YES)
+# Place items
+label_sum.pack(fill='none', side='left')
+canvas.pack(fill='y', expand=tk.YES)
 
 # Init cells
 for x, y in zip(X, Y):
@@ -86,6 +87,7 @@ def spawn(cell=None, speed=1):
         return None
 
 def one_generation():
+    global SUM_CELL
     # Modify data as you wish
     if len(cell_chain) < LIMIT_NUM:
         father_id = np.random.choice(list(cell_chain))
