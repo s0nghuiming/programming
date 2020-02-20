@@ -7,8 +7,8 @@ from cell import Cell
 # Static
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
-CELL_WIDTH = 1
-LIMIT_NUM = 2000
+CELL_WIDTH = 4
+LIMIT_NUM = 500
 
 
 # Data
@@ -18,6 +18,10 @@ MOST_TOP = CELL_WIDTH / 2
 MOST_BOTTOM = WINDOW_HEIGHT - CELL_WIDTH / 2
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
+
+
+# Flags
+PAUSE = False
 
 
 # Cell chain init
@@ -32,14 +36,20 @@ Y = np.random.randint( MOST_TOP, MOST_BOTTOM - CELL_WIDTH, CELL_INIT_NUM )
 # TK
 root = tk.Tk()
 
-# Label
+# TK common items
 label_sum = tk.Label(root, text="Total cell: ")
-# Canvas
+label_time = tk.Label(root, text=time.strftime('%H:%M:%S'), )
+
 canvas = tk.Canvas(root, bg='white', width=800, height=600)
 canvas.configure(bg='white')
-# Place items
-label_sum.pack(fill='none', side='left')
-canvas.pack(fill='y', expand=tk.YES)
+
+canvas.pack(fill='y', side='right', expand=tk.YES)
+label_time.pack(fill='x', side='top')
+label_sum.pack(fill='x', side='top')
+
+# TK Other items
+btn_pause = tk.Button(root, text="Pause")
+btn_pause.pack(fill='none', expand='yes')
 
 # Init cells
 for x, y in zip(X, Y):
@@ -57,6 +67,14 @@ for x, y in zip(X, Y):
         search_map[x].append(y)
 
 # Function
+
+# time_update
+#   update text of time label
+def time_update():
+    root.after(1000, time_update)
+    curtime = time.strftime('%H:%M:%S')
+    label_time.config(text=curtime)
+
 # spawn:
 #    One alive cell spawns his son.
 #    cell: alive cell,
@@ -67,14 +85,14 @@ def spawn(cell=None, speed=1):
         ys = cell.y
         new_cells = []
         delta_map = [
-                      (-10, 0), 
-                      (-10, 10), 
+                      (-10,  0 ), 
+                      (-10,  10), 
                       (-10, -10), 
-                      ( 0,  10), 
-                      ( 0, -10), 
-                      (10,   0),
-                      (10,  10),
-                      (10, -10),
+                      (  0,  10), 
+                      (  0, -10), 
+                      ( 10,   0),
+                      ( 10,  10),
+                      ( 10, -10),
                   ]
         for i in range(0,speed):
             dx, dy = delta_map[np.random.randint(len(delta_map))]
@@ -88,6 +106,8 @@ def spawn(cell=None, speed=1):
 
 def one_generation():
     global SUM_CELL
+    loop_id = None
+    loop_id = root.after(500, one_generation)
     # Modify data as you wish
     if len(cell_chain) < LIMIT_NUM:
         father_id = np.random.choice(list(cell_chain))
@@ -102,18 +122,23 @@ def one_generation():
             cell_chain[rect_id] = s_c
             SUM_CELL = SUM_CELL + 1
         if 0 != len(spawn_cells):
-            canvas
+            pass
+        label_sum.config(text="Total cell: " + str(len(cell_chain)))
     else:
         print("Maximum exceeds.")
-    root.after(500, one_generation)
+        root.after_cancel(loop_id)
 
     root.update()
 
+# Pause not impl
+def set_pause(event):
+    print("Paused")
 
-#canvas.bind("<Button-1>", one_generation)
+btn_pause.bind("<Button-1>", set_pause)
 
 
 root.after(0, one_generation)
+root.after(0, time_update)
 root.mainloop()
 
 #while True:
