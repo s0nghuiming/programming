@@ -5,19 +5,21 @@ from cell import Cell
 
 
 # Static
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-CELL_WIDTH = 4
-LIMIT_NUM = 5000
+CELL_SIZE = 4
+CANVAS_SIZE = ( 80, 60 ) # in 10 * 10 grid
+GRID_SIZE = 10
+WINDOW_WIDTH = CANVAS_SIZE[0] * GRID_SIZE + CELL_SIZE
+WINDOW_HEIGHT = CANVAS_SIZE[1] * GRID_SIZE + CELL_SIZE
 
 
 # Data
-MOST_LEFT = CELL_WIDTH / 2
-MOST_RIGHT = WINDOW_WIDTH - CELL_WIDTH / 2
-MOST_TOP = CELL_WIDTH / 2
-MOST_BOTTOM = WINDOW_HEIGHT - CELL_WIDTH / 2
+MOST_LEFT = 0
+MOST_RIGHT = WINDOW_WIDTH
+MOST_TOP = 0
+MOST_BOTTOM = WINDOW_HEIGHT
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
+LIMIT_NUM = 20
 
 
 # Flags
@@ -29,16 +31,18 @@ cell_chain = {}
 # Search map is for speeding search. each x coord as key of map. each y 
 # with the same x consist a list after key x.
 search_map = {}
-X = np.random.randint( MOST_LEFT, MOST_RIGHT - CELL_WIDTH, CELL_INIT_NUM )
-Y = np.random.randint( MOST_TOP, MOST_BOTTOM - CELL_WIDTH, CELL_INIT_NUM )
-
+X = np.random.randint( 0, CANVAS_SIZE[0], CELL_INIT_NUM ) * GRID_SIZE
+Y = np.random.randint( 0, CANVAS_SIZE[1], CELL_INIT_NUM ) * GRID_SIZE
+print(X)
+print(Y)
 
 # TK
 root = tk.Tk()
 
 # TK common items
-label_sum = tk.Label(root, text="Total cell: ")
-label_time = tk.Label(root, text=time.strftime('%H:%M:%S'), )
+label_sum = tk.Label(root, text="Total cell: ", font='fixed')
+label_time = tk.Label(root, text=time.strftime('%H:%M:%S'), font='fixed' )
+label_info = tk.Label(root, text='<location>', font='fixed' )
 
 canvas = tk.Canvas(root, bg='white', width=800, height=600)
 canvas.configure(bg='white')
@@ -46,14 +50,15 @@ canvas.configure(bg='white')
 canvas.pack(fill='y', side='right', expand=tk.YES)
 label_time.pack(fill='x', side='top')
 label_sum.pack(fill='x', side='top')
+label_info.pack(fill='x', side='bottom')
 
 # TK Other items
-btn_pause = tk.Button(root, text="Pause")
+btn_pause = tk.Button(root, text="Pause", font='fixed')
 btn_pause.pack(fill='none', expand='yes')
 
 # Init cells
 for x, y in zip(X, Y):
-    rect_id = canvas.create_rectangle(x,y,x+CELL_WIDTH,y+CELL_WIDTH)
+    rect_id = canvas.create_rectangle(x,y,x+CELL_SIZE,y+CELL_SIZE)
     cell = Cell(x, y, serialno=rect_id)
     cell_chain[rect_id] = cell
     # mapping with x , y
@@ -78,21 +83,21 @@ def time_update():
 
 # Function
 
+#
+def create_cell(cell = None):
+    if cell:
+        rect_id = canvas.create_rectangle(cell.x,
+                          cell.y,
+                          cell.x+CELL_SIZE,
+                          cell.y+CELL_SIZE )
+        cell.serialno = rect_id
+        cell_chain[rect_id] = cell
+        SUM_CELL = SUM_CELL + 1
+
 # spawn:
 #    One alive cell spawns his son.
 #    cell: alive cell,
 #    speed: how many sons born in one spawn,
-#    Description: || 占位符
-#    |生育新细胞的条件比较苛刻。最好是不要生在其他细胞上，也就是不重合；
-#    |按照|delta_map||的定义，是一个|3*3|的矩阵的中心为父亲细胞，外围八个
-#    |点作为子细胞。按这个方法简化的话，所有的细胞都应该出现在等距离的点
-#    |阵中。所以，要把细胞初始化的代码做修改，改为在矩阵的点上生成初始点。
-#    |另外，在本函数中，目前的判断条件是子细胞不能超出边框，而且新子细胞
-#    |不能和已有细胞重合。如果不满足条件，则返回空。这样的话此次函数调用
-#    |就不产生新细胞，需要等待下一轮调用，而如果下一轮也如此轮空的话，那么
-#    |很不幸，需要等更多的时间了。这种情况发生的概率将随着细胞的数量变大而
-#    |变大。如何能解决这种时间的浪费呢？
-#    |引入卷积，将能解决这个问题。接下来介绍……
 def spawn(cell=None, speed=1):
     if None != cell:
         xs = cell.x
@@ -113,7 +118,7 @@ def spawn(cell=None, speed=1):
             if xs + dx < MOST_RIGHT or xs + dx > MOST_LEFT:
                 if ys + dy < MOST_BOTTOM or ys + dy > MOST_TOP:
                     if not (xs + dx) in search_map or not (ys + dy) in search_map[xs+dx]:
-                        new_cells.append( Cell(xs + dx, ys + dy ) )
+                        new_cells.append( (xs + dx, ys + dy ) )
         return new_cells
     else:
         return None
@@ -134,11 +139,12 @@ def one_generation():
             father_id = np.random.choice(list(cell_chain))
             spawn_cells = spawn(cell_chain[father_id])
             #canvas.delete(tk.ALL)
-            for s_c in spawn_cells:
-                rect_id = canvas.create_rectangle(s_c.x, 
-                                              s_c.y, 
-                                              s_c.x+CELL_WIDTH, 
-                                              s_c.y+CELL_WIDTH)
+            for x, y in spawn_cells:
+                s_c = Cell(x, y)
+                rect_id = canvas.create_rectangle(s_c.x,
+                                              s_c.y,
+                                              s_c.x+CELL_SIZE,
+                                              s_c.y+CELL_SIZE )
                 s_c.serialno = rect_id
                 cell_chain[rect_id] = s_c
                 SUM_CELL = SUM_CELL + 1
@@ -148,6 +154,10 @@ def one_generation():
         else:
             print("Maximum exceeds.")
             root.after_cancel(loop_id)
+            print("# ----- Cells ----- \n")
+            for k, c in cell_chain.items():
+                print("{0} {1} {2}".format(str(k), str(c.x), str(c.y)))
+            print("\n# ----------\n")
 
         root.update()
 
@@ -165,6 +175,20 @@ def set_pause(event):
         print("Resumed")
 
 btn_pause.bind("<Button-1>", set_pause)
+
+# Label info
+def update_info(event):
+    label_info.config(text=f"x:{event.x},y:{event.y}")
+
+canvas.bind('<Motion>', update_info)
+
+# Collect cell
+def collect_cell(event):
+    x = event.x // GRID_SIZE * GRID_SIZE
+    y = event.y // GRID_SIZE * GRID_SIZE
+    print(f"x:{x}, y:{y}")
+
+canvas.bind('<Button-1>', collect_cell)
 
 
 root.after(0, one_generation)
