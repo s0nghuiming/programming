@@ -19,7 +19,7 @@ MOST_TOP = 0
 MOST_BOTTOM = WINDOW_HEIGHT
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
-LIMIT_NUM = 20
+LIMIT_NUM = 1000
 
 
 # Flags
@@ -61,6 +61,7 @@ for x, y in zip(X, Y):
     rect_id = canvas.create_rectangle(x,y,x+CELL_SIZE,y+CELL_SIZE)
     cell = Cell(x, y, serialno=rect_id)
     cell_chain[rect_id] = cell
+    # here init points dont overlap, so write to search map directly.
     # mapping with x , y
     if x in search_map:
         if not y in search_map[x]:
@@ -84,8 +85,11 @@ def time_update():
 # Function
 
 #
-def create_cell(cell = None):
-    if cell:
+def create_cell(x, y, father=None):
+    global SUM_CELL
+    if x and y:
+        cell = Cell(x, y)
+        cell.father = father
         rect_id = canvas.create_rectangle(cell.x,
                           cell.y,
                           cell.x+CELL_SIZE,
@@ -115,8 +119,8 @@ def spawn(cell=None, speed=1):
                   ]
         for i in range(0,speed):
             dx, dy = delta_map[np.random.randint(len(delta_map))]
-            if xs + dx < MOST_RIGHT or xs + dx > MOST_LEFT:
-                if ys + dy < MOST_BOTTOM or ys + dy > MOST_TOP:
+            if xs + dx < MOST_RIGHT and xs + dx > MOST_LEFT:
+                if ys + dy < MOST_BOTTOM and ys + dy > MOST_TOP:
                     if not (xs + dx) in search_map or not (ys + dy) in search_map[xs+dx]:
                         new_cells.append( (xs + dx, ys + dy ) )
         return new_cells
@@ -140,14 +144,19 @@ def one_generation():
             spawn_cells = spawn(cell_chain[father_id])
             #canvas.delete(tk.ALL)
             for x, y in spawn_cells:
-                s_c = Cell(x, y)
-                rect_id = canvas.create_rectangle(s_c.x,
-                                              s_c.y,
-                                              s_c.x+CELL_SIZE,
-                                              s_c.y+CELL_SIZE )
-                s_c.serialno = rect_id
-                cell_chain[rect_id] = s_c
-                SUM_CELL = SUM_CELL + 1
+                # mapping with x , y
+                if x in search_map and y in search_map[x]:
+                    print("hit")
+                else:
+                    create_cell(x, y, father=father_id)
+
+                    if x in search_map:
+                        #if not y in search_map[x]:
+                        search_map[x].append(y)
+                    else:
+                        search_map[x] = []
+                        search_map[x].append(y)
+
             if 0 != len(spawn_cells):
                 pass
             label_sum.config(text="Total cell: " + str(len(cell_chain)))
@@ -156,7 +165,7 @@ def one_generation():
             root.after_cancel(loop_id)
             print("# ----- Cells ----- \n")
             for k, c in cell_chain.items():
-                print("{0} {1} {2}".format(str(k), str(c.x), str(c.y)))
+                print("{0} {1} {2} {3}".format(str(k), str(c.father), str(c.x), str(c.y)))
             print("\n# ----------\n")
 
         root.update()
@@ -183,18 +192,25 @@ def update_info(event):
 canvas.bind('<Motion>', update_info)
 
 # Collect cell
+collect_num = 0
 def collect_cell(event):
+    global collect_num
     x = event.x // GRID_SIZE * GRID_SIZE
     y = event.y // GRID_SIZE * GRID_SIZE
-    print(f"x:{x}, y:{y}")
+    # If (x,y) is the cell exists in cell_chain/search_map
+    if x in search_map and y in search_map[x]:
+        collect_num = collect_num + 1
+        print(f"#{collect_num:3d}: x:{x}, y:{y}")
+
+def clear_collection(event):
+    global collect_num
+    collect_num = 0
 
 canvas.bind('<Button-1>', collect_cell)
+canvas.bind('<Button-3>', clear_collection)
 
 
+# TK loops
 root.after(0, one_generation)
 root.after(0, time_update)
 root.mainloop()
-
-#while True:
-#    root.update()
-#    time.sleep(1)
