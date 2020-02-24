@@ -174,3 +174,10 @@ root.mainloop()
 #while True:
 #    root.update()
 #    time.sleep(1)
+
+https://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-the-hobgoblin-of-little-minds
+https://pillow.readthedocs.io/en/stable/handbook/tutorial.html
+https://docs.scipy.org/doc/numpy/reference/
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.convolve2d.html
+https://gist.github.com/kashefy/00279f9edb3a56fd3d15
+
