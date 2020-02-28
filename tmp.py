@@ -180,4 +180,4 @@ https://pillow.readthedocs.io/en/stable/handbook/tutorial.html
 https://docs.scipy.org/doc/numpy/reference/
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.convolve2d.html
 https://gist.github.com/kashefy/00279f9edb3a56fd3d15
-
+https://pypi.org/project/Pillow/#files
