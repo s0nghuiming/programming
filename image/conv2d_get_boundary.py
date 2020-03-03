@@ -10,7 +10,7 @@ from scipy import signal
 """
 
 """ Read image file """ 
-IM_FN = "C:/Users/songhu1x/Pictures/Pillow/Untitled.png"
+IM_FN = "C:/Users/songhu1x/Pictures/Pillow/Untitled2.png"
 
 
 # Origin image
@@ -41,11 +41,17 @@ cv2.imshow('Gray image', gray)
 # Conv handler
 
 # g is for periphery of a image
-g = np.array([
+# g1
+g1 = np.array([
     [   1,  1,  1   ],
-    [   1,  -7, 1   ],
+    [   1, -7,  1   ],
     [   1,  1,  1   ]
     ])
+g = np.array([
+    [   0,  1,  0   ],
+    [   1, -4,  1   ],
+    [   0,  1,  0   ]
+    ], dtype=np.float32)
 
 scharr = np.array([[ -3-3j, 0-10j,  +3 -3j], # not tested successfully
                    [-10+0j, 0+ 0j, +10 +0j],
@@ -72,11 +78,12 @@ print( "Data type: " + str(grad_norm.dtype))
 
 cv2.imshow('Grad image', grad_norm)
 
+print("(  1,  1): \n" + str(grad_norm[1:4, 1:4]) )
 
 """ Write image file """
 #IM_FN = "C:\\Users\\songhu1x\\Pictures\\Pillow\\Untitled.png"
 
-cv2.imwrite("grad_norm.png", grad_norm)
+#cv2.imwrite("grad_norm.png", grad_norm)
 
 
 # cv2 needs destroy window

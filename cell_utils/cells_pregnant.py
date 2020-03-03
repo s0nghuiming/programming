@@ -23,7 +23,7 @@ LIMIT_NUM = 1000
 
 
 # Flags
-PAUSE = False # False and True. Default is True.
+PAUSE = False # Pause the progress. Default is False.
 
 
 # Cell chain init
@@ -35,6 +35,7 @@ X = np.random.randint( 0, CANVAS_SIZE[0], CELL_INIT_NUM ) * GRID_SIZE
 Y = np.random.randint( 0, CANVAS_SIZE[1], CELL_INIT_NUM ) * GRID_SIZE
 print(X)
 print(Y)
+
 
 # TK
 root = tk.Tk()
@@ -108,7 +109,7 @@ def spawn(cell=None, speed=1):
         ys = cell.y
         new_cells = []
         delta_map = [
-                      (-10,  0 ), 
+                      (-10,   0), 
                       (-10,  10), 
                       (-10, -10), 
                       (  0,  10), 
@@ -170,7 +171,7 @@ def one_generation():
 
         root.update()
 
-# Pause not impl
+# Pause the progress
 def set_pause(event):
     global PAUSE
     if False == PAUSE:
@@ -185,7 +186,7 @@ def set_pause(event):
 
 btn_pause.bind("<Button-1>", set_pause)
 
-# Label info
+# Mouse position info
 def update_info(event):
     label_info.config(text=f"x:{event.x},y:{event.y}")
 
