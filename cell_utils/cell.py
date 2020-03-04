@@ -9,3 +9,6 @@ class Cell():
         self.y = y
         self.father = None
 
+class Cell_Chain(dict):
+    def __init__(self):
+        super(Cell_Chain, self).__init__()

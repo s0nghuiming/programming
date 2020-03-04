@@ -2,6 +2,7 @@ import tkinter as tk
 import time
 import numpy as np
 from cell import Cell
+from scipy.ndimage.interpolation import shift
 
 
 # Static
@@ -28,9 +29,16 @@ PAUSE = False # Pause the progress. Default is False.
 
 # Cell chain init
 cell_chain = {}
+# Search map
 # Search map is for speeding search. each x coord as key of map. each y 
 # with the same x consist a list after key x.
 search_map = {}
+# Outline map
+# Outline is the outline of the integrate of all cells that closed to 
+# each other. It is used to store the coordinates of the cells on the 
+# outline.
+outline_map = np.zeros(CANVAS_SIZE, dtype='uint8')
+
 X = np.random.randint( 0, CANVAS_SIZE[0], CELL_INIT_NUM ) * GRID_SIZE
 Y = np.random.randint( 0, CANVAS_SIZE[1], CELL_INIT_NUM ) * GRID_SIZE
 print(X)
@@ -62,6 +70,8 @@ for x, y in zip(X, Y):
     rect_id = canvas.create_rectangle(x,y,x+CELL_SIZE,y+CELL_SIZE)
     cell = Cell(x, y, serialno=rect_id)
     cell_chain[rect_id] = cell
+    # outline
+    outline_map[x//10][y//10] = 255
     # here init points dont overlap, so write to search map directly.
     # mapping with x , y
     if x in search_map:
@@ -85,7 +95,24 @@ def time_update():
 
 # Function
 
-#
+# get outline:
+# this function is to find outline of a mass of cells.
+# Input: outline_map
+# Output: a numpy array. if value is 255, it is the outline of the mass.
+def get_outline():
+    global outline_map
+    rev = -1-outline_map # this change 0 to 255, 255 to 0 for a uint8 matrix
+    map1 = shift(rev, 1, cval=np.NaN) - rev
+    map2 = shift(rev, -1, cval=np.NaN) - rev
+
+    outline = np.array(
+            [ [ 0 if j <= 127 else 255 for j in i ] for i in map1 + map2 ],
+            dtype='uint8'
+            )
+
+    return outline
+
+# create a cell
 def create_cell(x, y, father=None):
     global SUM_CELL
     if x and y:
@@ -98,6 +125,7 @@ def create_cell(x, y, father=None):
         cell.serialno = rect_id
         cell_chain[rect_id] = cell
         SUM_CELL = SUM_CELL + 1
+        outline_map[x//10][y//10] = 255
 
 # spawn:
 #    One alive cell spawns his son.
