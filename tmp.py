@@ -181,3 +181,6 @@ https://docs.scipy.org/doc/numpy/reference/
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.convolve2d.html
 https://gist.github.com/kashefy/00279f9edb3a56fd3d15
 https://pypi.org/project/Pillow/#files
+# python inherit dict
+https://treyhunner.com/2019/04/why-you-shouldnt-inherit-from-list-and-dict-in-python/
+http://www.kr41.net/2016/03-23-dont_inherit_python_builtin_dict_type.html
