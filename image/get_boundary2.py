@@ -26,6 +26,7 @@ print( "len:     " + str(len(im)) )
 print( "Data type: " + str(im.dtype))
 
 cv2.imshow('image', im)
+
 #3tunnel picture print("Origin image(  0,  0): \n" + str(im[0:10, 0:10]) )
 
 # Gray image
@@ -83,10 +84,6 @@ cv2.imshow('Gray4 image', gray4)
 print("Image plus 2(  0,  0): \n" + str(gray4[0:10, 0:10]) )
 
 
-""" Write image file """
-cv2.imwrite("outline.png", gray3)
-
-
 # combine gray3 and gray4
 # [ [ 0 if j <= 127 else 255 for j in i ] for i in B ]
 outline = np.array(
@@ -102,6 +99,9 @@ print( "Data type: " + str(   outline.dtype))
 
 print("Image plus 2(  0,  0): \n" + str(outline[0:10, 0:10]) )
 cv2.imshow('Outline image', outline)
+
+""" Write image file """
+cv2.imwrite("outline.png", gray3)
 
 
 # cv2 needs destroy window

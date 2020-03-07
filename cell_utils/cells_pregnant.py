@@ -1,7 +1,7 @@
 import tkinter as tk
 import time
 import numpy as np
-from cell import Cell
+from cell import Cell, Cell_Chain
 from scipy.ndimage.interpolation import shift
 
 
@@ -20,7 +20,7 @@ MOST_TOP = 0
 MOST_BOTTOM = WINDOW_HEIGHT
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
-LIMIT_NUM = 1000
+LIMIT_NUM = 150
 
 
 # Flags
@@ -28,7 +28,7 @@ PAUSE = False # Pause the progress. Default is False.
 
 
 # Cell chain init
-cell_chain = {}
+cell_chain = Cell_Chain()
 # Search map
 # Search map is for speeding search. each x coord as key of map. each y 
 # with the same x consist a list after key x.
@@ -74,14 +74,16 @@ for x, y in zip(X, Y):
     outline_map[x//10][y//10] = 255
     # here init points dont overlap, so write to search map directly.
     # mapping with x , y
-    if x in search_map:
-        if not y in search_map[x]:
-            search_map[x].append(y)
-        else:
-            pass # x, y already in map.
-    else:
-        search_map[x] = []
-        search_map[x].append(y)
+    if not cell_chain.contains([x, y]):
+        cell_chain.add_to_search_map([ x, y ])
+    #if x in search_map:
+    #    if not y in search_map[x]:
+    #        search_map[x].append(y)
+    #    else:
+    #        pass # x, y already in map.
+    #else:
+    #    search_map[x] = []
+    #    search_map[x].append(y)
 
 # Common function
 
@@ -150,7 +152,7 @@ def spawn(cell=None, speed=1):
             dx, dy = delta_map[np.random.randint(len(delta_map))]
             if xs + dx < MOST_RIGHT and xs + dx > MOST_LEFT:
                 if ys + dy < MOST_BOTTOM and ys + dy > MOST_TOP:
-                    if not (xs + dx) in search_map or not (ys + dy) in search_map[xs+dx]:
+                    if not cell_chain.contains([(xs + dx), (ys + dy)]):
                         new_cells.append( (xs + dx, ys + dy ) )
         return new_cells
     else:
@@ -174,17 +176,17 @@ def one_generation():
             #canvas.delete(tk.ALL)
             for x, y in spawn_cells:
                 # mapping with x , y
-                if x in search_map and y in search_map[x]:
+                if cell_chain.contains([x, y]):
                     print("hit")
                 else:
                     create_cell(x, y, father=father_id)
-
-                    if x in search_map:
-                        #if not y in search_map[x]:
-                        search_map[x].append(y)
-                    else:
-                        search_map[x] = []
-                        search_map[x].append(y)
+                    cell_chain.add_to_search_map([x, y])
+                    # if x in search_map:
+                    #     #if not y in search_map[x]:
+                    #     search_map[x].append(y)
+                    # else:
+                    #     search_map[x] = []
+                    #     search_map[x].append(y)
 
             if 0 != len(spawn_cells):
                 pass
@@ -196,6 +198,16 @@ def one_generation():
             for k, c in cell_chain.items():
                 print("{0} {1} {2} {3}".format(str(k), str(c.father), str(c.x), str(c.y)))
             print("\n# ----------\n")
+            sum = 0
+            for a in cell_chain.get_search_map():
+                sum = sum + len(cell_chain.get_search_map()[a])
+                print(str(a) + ":" + str(len(cell_chain.get_search_map()[a])))
+            print("Sum: " + str(sum))
+            for cell in cell_chain.values():
+                if cell_chain.contains([cell.x, cell.y]):
+                    pass
+                else:
+                    print(cell.x, ' ', cell.y)
 
         root.update()
 
@@ -227,7 +239,7 @@ def collect_cell(event):
     x = event.x // GRID_SIZE * GRID_SIZE
     y = event.y // GRID_SIZE * GRID_SIZE
     # If (x,y) is the cell exists in cell_chain/search_map
-    if x in search_map and y in search_map[x]:
+    if cell_chain.contains([x, y]):
         collect_num = collect_num + 1
         print(f"#{collect_num:3d}: x:{x}, y:{y}")
 
