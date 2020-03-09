@@ -2,7 +2,6 @@ import tkinter as tk
 import time
 import numpy as np
 from cell import Cell, Cell_Chain
-from scipy.ndimage.interpolation import shift
 
 
 # Static
@@ -20,7 +19,7 @@ MOST_TOP = 0
 MOST_BOTTOM = WINDOW_HEIGHT
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
-LIMIT_NUM = 150
+LIMIT_NUM = 1200
 
 
 # Flags
@@ -29,16 +28,6 @@ PAUSE = False # Pause the progress. Default is False.
 
 # Cell chain init
 cell_chain = Cell_Chain()
-# Search map
-# Search map is for speeding search. each x coord as key of map. each y 
-# with the same x consist a list after key x.
-search_map = {}
-# Outline map
-# Outline is the outline of the integrate of all cells that closed to 
-# each other. It is used to store the coordinates of the cells on the 
-# outline.
-outline_map = np.zeros(CANVAS_SIZE, dtype='uint8')
-
 X = np.random.randint( 0, CANVAS_SIZE[0], CELL_INIT_NUM ) * GRID_SIZE
 Y = np.random.randint( 0, CANVAS_SIZE[1], CELL_INIT_NUM ) * GRID_SIZE
 print(X)
@@ -70,20 +59,10 @@ for x, y in zip(X, Y):
     rect_id = canvas.create_rectangle(x,y,x+CELL_SIZE,y+CELL_SIZE)
     cell = Cell(x, y, serialno=rect_id)
     cell_chain[rect_id] = cell
-    # outline
-    outline_map[x//10][y//10] = 255
     # here init points dont overlap, so write to search map directly.
     # mapping with x , y
     if not cell_chain.contains([x, y]):
-        cell_chain.add_to_search_map([ x, y ])
-    #if x in search_map:
-    #    if not y in search_map[x]:
-    #        search_map[x].append(y)
-    #    else:
-    #        pass # x, y already in map.
-    #else:
-    #    search_map[x] = []
-    #    search_map[x].append(y)
+        cell_chain.add_to_search_map([ x, y ], tk_id=rect_id)
 
 # Common function
 
@@ -96,23 +75,6 @@ def time_update():
 
 
 # Function
-
-# get outline:
-# this function is to find outline of a mass of cells.
-# Input: outline_map
-# Output: a numpy array. if value is 255, it is the outline of the mass.
-def get_outline():
-    global outline_map
-    rev = -1-outline_map # this change 0 to 255, 255 to 0 for a uint8 matrix
-    map1 = shift(rev, 1, cval=np.NaN) - rev
-    map2 = shift(rev, -1, cval=np.NaN) - rev
-
-    outline = np.array(
-            [ [ 0 if j <= 127 else 255 for j in i ] for i in map1 + map2 ],
-            dtype='uint8'
-            )
-
-    return outline
 
 # create a cell
 def create_cell(x, y, father=None):
@@ -127,7 +89,9 @@ def create_cell(x, y, father=None):
         cell.serialno = rect_id
         cell_chain[rect_id] = cell
         SUM_CELL = SUM_CELL + 1
-        outline_map[x//10][y//10] = 255
+        return rect_id
+    else:
+        return None
 
 # spawn:
 #    One alive cell spawns his son.
@@ -148,12 +112,17 @@ def spawn(cell=None, speed=1):
                       ( 10,  10),
                       ( 10, -10),
                   ]
+        free_direction = 8 # default for free space around a cell
         for i in range(0,speed):
-            dx, dy = delta_map[np.random.randint(len(delta_map))]
+            direction = np.random.randint(len(delta_map))
+            for i in range(0, 8)
+            dx, dy = delta_map[direction]
+            
             if xs + dx < MOST_RIGHT and xs + dx > MOST_LEFT:
                 if ys + dy < MOST_BOTTOM and ys + dy > MOST_TOP:
                     if not cell_chain.contains([(xs + dx), (ys + dy)]):
                         new_cells.append( (xs + dx, ys + dy ) )
+                    else:
         return new_cells
     else:
         return None
@@ -171,22 +140,23 @@ def one_generation():
     else:
         # Modify data as you wish
         if len(cell_chain) < LIMIT_NUM:
-            father_id = np.random.choice(list(cell_chain))
+            outline_image = cell_chain.get_outline(mode='')
+            print(cell_chain.prt_searchmap())
+            print(outline_image)
+            index = np.random.choice(range(len(outline_image)))
+            print(index)
+            print(outline_image[index])
+            father_id = cell_chain.get_search_map(
+                                            point = outline_image[index],
+                                            mode='single')
             spawn_cells = spawn(cell_chain[father_id])
-            #canvas.delete(tk.ALL)
             for x, y in spawn_cells:
                 # mapping with x , y
                 if cell_chain.contains([x, y]):
                     print("hit")
                 else:
-                    create_cell(x, y, father=father_id)
-                    cell_chain.add_to_search_map([x, y])
-                    # if x in search_map:
-                    #     #if not y in search_map[x]:
-                    #     search_map[x].append(y)
-                    # else:
-                    #     search_map[x] = []
-                    #     search_map[x].append(y)
+                    rect_id = create_cell(x, y, father=father_id)
+                    cell_chain.add_to_search_map([x, y], tk_id=rect_id)
 
             if 0 != len(spawn_cells):
                 pass
@@ -195,19 +165,20 @@ def one_generation():
             print("Maximum exceeds.")
             root.after_cancel(loop_id)
             print("# ----- Cells ----- \n")
-            for k, c in cell_chain.items():
-                print("{0} {1} {2} {3}".format(str(k), str(c.father), str(c.x), str(c.y)))
-            print("\n# ----------\n")
-            sum = 0
-            for a in cell_chain.get_search_map():
-                sum = sum + len(cell_chain.get_search_map()[a])
-                print(str(a) + ":" + str(len(cell_chain.get_search_map()[a])))
-            print("Sum: " + str(sum))
-            for cell in cell_chain.values():
-                if cell_chain.contains([cell.x, cell.y]):
-                    pass
-                else:
-                    print(cell.x, ' ', cell.y)
+            print(cell_chain.prt_image())
+            #for k, c in cell_chain.items():
+            #    print("{0} {1} {2} {3}".format(str(k), str(c.father), str(c.x), str(c.y)))
+            #print("\n# ----------\n")
+            #sum = 0
+            #for a in cell_chain.get_search_map():
+            #    sum = sum + len(cell_chain.get_search_map()[a])
+            #    print(str(a) + ":" + str(len(cell_chain.get_search_map()[a])))
+            #print("Sum: " + str(sum))
+            #for cell in cell_chain.values():
+            #    if cell_chain.contains([cell.x, cell.y]):
+            #        pass
+            #    else:
+            #        print(cell.x, ' ', cell.y)
 
         root.update()
 
@@ -238,7 +209,6 @@ def collect_cell(event):
     global collect_num
     x = event.x // GRID_SIZE * GRID_SIZE
     y = event.y // GRID_SIZE * GRID_SIZE
-    # If (x,y) is the cell exists in cell_chain/search_map
     if cell_chain.contains([x, y]):
         collect_num = collect_num + 1
         print(f"#{collect_num:3d}: x:{x}, y:{y}")

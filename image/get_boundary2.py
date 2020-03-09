@@ -101,7 +101,7 @@ print("Image plus 2(  0,  0): \n" + str(outline[0:10, 0:10]) )
 cv2.imshow('Outline image', outline)
 
 """ Write image file """
-cv2.imwrite("outline.png", gray3)
+cv2.imwrite("outline.png", outline)
 
 
 # cv2 needs destroy window
