@@ -115,14 +115,16 @@ def spawn(cell=None, speed=1):
         free_direction = 8 # default for free space around a cell
         for i in range(0,speed):
             direction = np.random.randint(len(delta_map))
-            for i in range(0, 8)
-            dx, dy = delta_map[direction]
-            
-            if xs + dx < MOST_RIGHT and xs + dx > MOST_LEFT:
-                if ys + dy < MOST_BOTTOM and ys + dy > MOST_TOP:
-                    if not cell_chain.contains([(xs + dx), (ys + dy)]):
-                        new_cells.append( (xs + dx, ys + dy ) )
-                    else:
+            for i in range(0, 8):
+                _di = (direction + i) % 8
+                dx, dy = delta_map[_di]
+                if xs + dx < MOST_RIGHT and xs + dx > MOST_LEFT:
+                    if ys + dy < MOST_BOTTOM and ys + dy > MOST_TOP:
+                        if not cell_chain.contains([(xs + dx), (ys + dy)]):
+                            new_cells.append( (xs + dx, ys + dy ) )
+                            break
+                        else:
+                            continue
         return new_cells
     else:
         return None
