@@ -1,6 +1,7 @@
 import tkinter as tk
 import time
 import numpy as np
+import cv2
 from cell import Cell, Cell_Chain
 
 
@@ -10,17 +11,15 @@ CANVAS_SIZE = ( 80, 60 ) # in 10 * 10 grid
 GRID_SIZE = 10
 WINDOW_WIDTH = CANVAS_SIZE[0] * GRID_SIZE + CELL_SIZE
 WINDOW_HEIGHT = CANVAS_SIZE[1] * GRID_SIZE + CELL_SIZE
-
-
-# Data
 MOST_LEFT = 0
 MOST_RIGHT = WINDOW_WIDTH
 MOST_TOP = 0
 MOST_BOTTOM = WINDOW_HEIGHT
+
+# Data
 CELL_INIT_NUM = 10
 SUM_CELL = CELL_INIT_NUM
-LIMIT_NUM = 1200
-
+LIMIT_NUM = 4800
 
 # Flags
 PAUSE = False # Pause the progress. Default is False.
@@ -52,7 +51,9 @@ label_info.pack(fill='x', side='bottom')
 
 # TK Other items
 btn_pause = tk.Button(root, text="Pause", font='fixed')
+btn_dumpimage = tk.Button(root, text="Dump Image", font='fixed')
 btn_pause.pack(fill='none', expand='yes')
+btn_dumpimage.pack(fill='none', expand='yes')
 
 # Init cells
 for x, y in zip(X, Y):
@@ -125,6 +126,10 @@ def spawn(cell=None, speed=1):
                             break
                         else:
                             continue
+                    else:
+                        continue
+                else:
+                    continue
         return new_cells
     else:
         return None
@@ -198,6 +203,21 @@ def set_pause(event):
         print("Resumed")
 
 btn_pause.bind("<Button-1>", set_pause)
+
+# Dump image to a file
+file_index = 0
+def dump_image(event):
+    global file_index
+    if cv2:
+        cv2.imwrite(
+                "dumpfile_" + str(file_index) + ".png",
+                cell_chain.get_outline()
+                )
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    file_index = file_index + 1
+
+btn_dumpimage.bind("<Button-1>", dump_image)
 
 # Mouse position info
 def update_info(event):
